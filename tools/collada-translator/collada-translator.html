@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>SceneJS &gt; Tools &gt; COLLADA Translator</title>
+    <link href="http://www.scenejs.org/css/style.css" rel="stylesheet" type="text/css"/>
+
+    <link href="css/style.css" rel="stylesheet" type="text/css"/>
+    <link href="./css/style.css" rel="stylesheet" type="text/css"/>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript"></script>
+
+    <script src="lib/glge_xmlparser.js" type="text/javascript"></script>
+    <script src="lib/scenejs_collada_parser-unrolled.js" type="text/javascript"></script>
+    <script src="lib/json2.js" type="text/javascript"></script>
+
+</head>
+<body>
+
+<div id="container">
+    <div id="header">
+        <div id="header-nav">
+
+        </div>
+        <div id="header-inner">
+            <h1><a href="../index.html">SceneJS</a> &gt; <a href="../index.html">Tools</a> &gt; COLLADA Translator
+                <span id="current-version"></span></h1>
+
+            <a class="a2a_dd" href="http://www.addtoany.com/share_save?linkname=s&amp;linkurl=s"><img
+                    src="http://static.addtoany.com/buttons/share_save_171_16.png" width="171" height="16" border="0"
+                    alt="Share/Bookmark"/></a>
+            <script type="text/javascript">
+                var a2a_linkname = "Online COLLADA-to-SceneJS Translator";
+                var a2a_linkurl = window.location;
+                var a2a_onclick = 1;</script>
+            <script type="text/javascript" src="http://static.addtoany.com/menu/page.js"></script>
+        </div>
+    </div>
+    <div id="subheader">
+        <div id="tool-intro">
+            <div class="head">
+                <p class="info"><a id="more-info">More info..</a></p>
+            </div>
+            <div class="body">
+                <p class="info">Enter the location of a .DAE file then click <b>Translate</b> to convert it into a
+                    SceneJS JSON subgraph, nicely packaged in a <a target="other"
+                                                                   href="http://scenejs.wikispaces.com/SceneJS.UseModule">SceneJS
+                        Module</a>
+                    for easy integration into your scene graph.</p> <br/>
+
+
+                <p class="info">Your new module will have the same image URLs as the original COLLADA file, so it needs
+                    to be at the same location relative to the images.</p>
+
+                <p class="info">With your module file saved where your scene file can get it, you can then import it
+                    like
+                    so:</p>
+                <pre><code>
+                    SceneJS.requireModule("http://foo.com/seymourplane_triangulate.js");
+                </code></pre>
+                <p class="info">The module will organise its &lt;visual_scene&gt; elements and &lt;camera&gt; views
+                    as Nodes within <a target="other" href="http://www.scenejs.org/docs/symbols/SceneJS.Library.html">libraries</a>,
+                    which you may instantiate within your scene graph. The available Symbol IDs will
+                    be listed in the function's comments.
+                </p>
+
+                <p class="info">For example, to view the Seymour Plane example's &lt;visual_scene&gt; "VisualScene"
+                    through one of it's cameras:</p>
+           <pre><code>
+               SceneJS.instance({ target: "seymourplane_triangulate.camera1" });
+           </code></pre>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+        <div id="tool-body">
+            <div class="translatorCol1">
+
+                <div class="fieldSet">
+                    <div class="fieldCol1">
+                        <h3> Past Collada here:</h3>
+                        <ul>
+                            <li><p><span><b>Please excuse browser slowness!</b></span></p></li>
+                            <li><p><span>Pasting and copying of large texts to/from &lt;textarea&gt; is very slow in Chrome - just select "wait" whenever it offers to kill the page.</span>
+                            </p></li>
+                            <li><p><span>For a faster paste/copy, try Firefox.</span></p></li>
+                        </ul>
+                    </div>
+                    <div class="fieldCol2">
+                        <textarea id="sourceText"></textarea>
+                    </div>
+                </div>
+
+                <div class="fieldSet">
+                    <div class="fieldCol1">
+                        ID Prefix:
+                    </div>
+                    <div class="fieldCol2">
+                        <input id="idPrefix" type="text" class="idleField" value="myModel"/>
+                    </div>
+                </div>
+
+                <div class="fieldSet">
+                    <div class="fieldCol1">
+                        &nbsp;
+                    </div>
+                    <div class="fieldCol2">
+                        <input type="button" value="Translate >>" id="translate-button"/>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="translatorCol2">
+                <textarea id="targetText"></textarea>
+            </div>
+        </div>
+
+        <div id="footer"><p>All content is copyright (C) 2009 Lindsay Kay, <a href="http://www.xeolabs.com">Xeolabs</a>
+        </p>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        var sourceTextArea = $("#sourceText");
+        var targetTextArea = $("#targetText");
+        var idPrefixField = $("#idPrefix");
+
+        var source = {
+            text: sourceTextArea.val()
+        };
+
+        /* Translation params
+         */
+        var options = {
+            idPrefix: idPrefixField.val(),
+            comments: false,
+            info:  false,
+            boundingBoxes : false,
+            numIndents : 4
+        };
+
+        /* Product of translation, created by parser
+         */
+        var product = {
+            rootNode : null,
+            asset : {},
+            manifest: {}
+        };
+
+        var infoOpen = false;
+        $("#tool-intro .body").hide();
+        $("#tool-intro .head").click(function() {
+            $(this).next("#tool-intro .body").slideToggle(600);
+            infoOpen = !infoOpen;
+            $("#more-info").text(infoOpen ? "Close info" : "More info");
+        });
+
+        sourceTextArea.change(
+                function() {
+                    source.text = trimStringOrNull($(this).val());
+                    targetTextArea.val("");
+                });
+
+        idPrefixField.change(
+                function() {
+                    source.idPrefix = trimStringOrNull($(this).val());
+                    targetTextArea.val("");
+                });
+
+        function trimStringOrNull(str) {
+            str = str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+            return str.length > 0 ? str : null;
+        }
+
+        $('#translate-button').click(function() {
+            doTranslate();
+        });
+
+        attachFieldStyles();
+
+        logProgress("Let's translate some COLLADA into a SceneJS module!\n\nEnter the location of a .DAE file and click Translate\n\nFor assistance, click [More info] at the upper left");
+
+        function attachFieldStyles() {
+            $("textarea").addClass("idleField");
+            $("textarea").focus(function() {
+                $(this).removeClass("idleField").addClass("focusField");
+                this.select();
+            });
+            $("textarea").blur(function() {
+                $(this).removeClass("focusField").addClass("idleField");
+            });
+        }
+
+        function doTranslate() {
+            targetTextArea.val("");
+            if (!source.text) {
+                logProgress("Paste DAE contents and click Translate");
+                return;
+            }
+            logProgress("Parsing...");
+            convertCollada();
+        }
+
+        function logProgress(msg) {
+            targetTextArea.val(targetTextArea.val() + msg + "\n\n");
+        }
+
+        function convertCollada() {
+
+            /* Load Collada into an XML DOM
+             */
+            var xmlDoc
+            try {
+                xmlDoc = new XML.Document(source.text);   // GLGE parser
+            } catch (e) {
+                alert("Error parsing XML: " + e);
+                return;
+            }
+
+            var parser = new SceneJS_ColladaToJSONParser();
+            //try {
+
+            /* Parse the Collada
+             */
+            parser.parse({
+                baseID: options.idPrefix,
+                options:{
+                    comments: options.comments,
+                    boundingBoxes : options.boundingBoxes,
+                    info: options.info
+                }
+            },
+                    xmlDoc,
+
+                    function(result) {
+                        if (result.error) {
+                            alert("Parsing error: " + result.error + ": " + result.body);
+
+                        } else {
+
+                            var rootNode = result.body.rootNode;
+                            var resultStr = "var myNode = SceneJS.createNode(" + JSON.stringify(rootNode, null, "  ") + ");";
+
+                            product = {
+                                rootNode: resultStr,
+                                asset: result.asset,
+                                manifest : result.body.manifest
+                            };
+
+                            showJSONProduct();
+                        }
+                    });
+            //        } catch (e) {
+            //            alert("Parsing exception:" + e + " - are you sure the source file is valid?");
+            //        }
+        }
+
+        function showJSONProduct() {
+            targetTextArea.val(product.rootNode);
+        }
+    });
+</script>
+
+</body>
+</html>
