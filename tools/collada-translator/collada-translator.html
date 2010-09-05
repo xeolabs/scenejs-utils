@@ -42,33 +42,40 @@
                 <p class="info"><a id="more-info">More info..</a></p>
             </div>
             <div class="body">
-                <p class="info">Enter the location of a .DAE file then click <b>Translate</b> to convert it into a
-                    SceneJS JSON subgraph, nicely packaged in a <a target="other"
-                                                                   href="http://scenejs.wikispaces.com/SceneJS.UseModule">SceneJS
-                        Module</a>
-                    for easy integration into your scene graph.</p> <br/>
+                <p class="info">Paste the contents of a .DAE file, then click <b>Translate</b> to get a
+                    SceneJS JSON subgraph, wrapped in a function call that creates a node object:</p>
 
-
-                <p class="info">Your new module will have the same image URLs as the original COLLADA file, so it needs
-                    to be at the same location relative to the images.</p>
-
-                <p class="info">With your module file saved where your scene file can get it, you can then import it
-                    like
-                    so:</p>
                 <pre><code>
-                    SceneJS.requireModule("http://foo.com/seymourplane_triangulate.js");
+                    var myNode = SceneJS.createNode( ... JSON ... );
                 </code></pre>
-                <p class="info">The module will organise its &lt;visual_scene&gt; elements and &lt;camera&gt; views
-                    as Nodes within <a target="other" href="http://www.scenejs.org/docs/symbols/SceneJS.Library.html">libraries</a>,
-                    which you may instantiate within your scene graph. The available Symbol IDs will
-                    be listed in the function's comments.
-                </p>
 
-                <p class="info">For example, to view the Seymour Plane example's &lt;visual_scene&gt; "VisualScene"
-                    through one of it's cameras:</p>
-           <pre><code>
-               SceneJS.instance({ target: "seymourplane_triangulate.camera1" });
-           </code></pre>
+                <p class="info">You can then just drop the node straight into your scene graph:</p>
+                <pre><code>
+                    var myScene = new SceneJS.Scene(
+
+                        //..
+
+                        myNode
+
+                        //..
+                    };
+                </code></pre>
+
+                <p class="info">By default, <b>"myModel."</b> will be prefixed to all Collada IDs. Change that
+                    to
+                    something unique within your scene.</p>
+
+                <h3>Resources:</h3>
+                <ul>
+                    <li>
+                        <p class="info"><a target="_other" href="http://scenejs.wikispaces.com/JSON+Scene+Definition">Wiki
+                            page on SceneJS JSON</a></p>
+                    </li>
+                    <li>
+                        <p class="info">You can use this utility offline - <a target="_other" href="http://github.com/xeolabs/scenejs-utils">get the source code</a></p>
+                    </li>
+                </ul>
+
             </div>
         </div>
     </div>
@@ -79,12 +86,6 @@
                 <div class="fieldSet">
                     <div class="fieldCol1">
                         <h3> Past Collada here:</h3>
-                        <ul>
-                            <li><p><span><b>Please excuse browser slowness!</b></span></p></li>
-                            <li><p><span>Pasting and copying of large texts to/from &lt;textarea&gt; is very slow in Chrome - just select "wait" whenever it offers to kill the page.</span>
-                            </p></li>
-                            <li><p><span>For a faster paste/copy, try Firefox.</span></p></li>
-                        </ul>
                     </div>
                     <div class="fieldCol2">
                         <textarea id="sourceText"></textarea>
@@ -109,6 +110,13 @@
                     </div>
 
                 </div>
+                <ul>
+                    <li><p><span><b>Please excuse browser slowness</b> - pasting and copying of large texts
+                                to and from &lt;textarea&gt; is very slow in Chrome - just select "wait" whenever it offers to kill the page.
+                            For a faster paste/copy, try Firefox.</span></p></li>
+                    <li><p><span><b>You can use this offline</b> - get the source code for this utility <a
+                            href="http://github.com/xeolabs/scenejs-utils">at GitHub</a>.</span></p></li>
+                </ul>
             </div>
 
             <div class="translatorCol2">
