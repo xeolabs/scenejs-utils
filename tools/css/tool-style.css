@@ -112,9 +112,13 @@
     padding: 0px;
 }
 
-#sourceText {
+sourceText {
     width: 240px !important;
     height: 200px !important;
+}
+
+#url {
+    width: 240px; !important;
 }
 
 #idPrefix {
