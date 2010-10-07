@@ -65,9 +65,12 @@ var XML = {};
     //functioin returns array of elements
     XML.Element.prototype.getElementsByTagName = function(tagName) {
         var retArray = [];
+		var n = 0;
         for (var i = 0; i < this.children.length; i++) {
             if (this.children[i].tagName == tagName || tagName == "*") {
-                if (this.children[i].tagName) retArray.push(this.children[i]);
+                if (this.children[i].tagName) {
+					retArray.push(this.children[i]);
+				}
             }
             //process the children
             if (this.children[i].hasChildren) retArray = retArray.concat(this.children[i].getElementsByTagName(tagName));
@@ -116,7 +119,8 @@ var XML = {};
                         this.currentElement.addChild(newElement);
                         this.sPointer++;
                     }
-                } else {
+                }
+				else {
                     //close element
                     parentElement = this.eleStack.pop();
                     if (parentElement) {
@@ -126,8 +130,8 @@ var XML = {};
                         this.rootElement = this.currentElement;
                     }
                     this.closeElement();
-                }
-            } else {
+                }		
+			} else {
                 if (cdata && xml[this.sPointer] == "]" && xml[this.sPointer + 1] == "]" && xml[this.sPointer + 2] == ">") {
                     //close cdata section!
                     this.currentElement.addChild(new XML.TextNode(textValue));
@@ -163,7 +167,10 @@ var XML = {};
                 name = name + xml[this.sPointer];
                 this.sPointer++;
             }
-        } while (xml[this.sPointer] != "/" && xml[this.sPointer] != ">" && this.sPointer < xml.length);
+        } while (xml[this.sPointer] != "/" && xml[this.sPointer] != ">" && this.sPointer < xml.length && (xml[this.sPointer+1]+xml[this.sPointer+2]) != "/>");
+		if((xml[this.sPointer+1]+xml[this.sPointer+2]) == "/>") {
+			this.sPointer++;
+		}
         var element = new XML.Element(name);
         if (attributes) {
             element.setAttributes(attributes);
@@ -177,21 +184,23 @@ var XML = {};
         var xml = this.xml;
         var attributes = {};
         do{
-            var name = "";
+			var name = "";
             do{
                 if (xml[this.sPointer] != " ") name = name + xml[this.sPointer];
                 this.sPointer++;
-            } while (xml[this.sPointer] != "=" && this.sPointer < xml.length);
+            } while ((xml[this.sPointer]+xml[this.sPointer+1]) != "/>" && xml[this.sPointer] != "=" && this.sPointer < xml.length); //added xml[this.sPointer] != "/"
             var quote = xml[++this.sPointer];
             var value = "";
             this.sPointer++;
             do{
                 value = value + xml[this.sPointer];
                 this.sPointer++;
-            } while (xml[this.sPointer] != quote && this.sPointer < xml.length);
-            if (name != "") attributes[name] = value;
+            } while ((xml[this.sPointer]+xml[this.sPointer+1]) != "/>" && xml[this.sPointer] != quote && this.sPointer < xml.length);
+            if (name != "") {
+				attributes[name] = value;
+			}
             this.sPointer++;
-        } while (xml[this.sPointer] != "/" && xml[this.sPointer] != ">" && this.sPointer < xml.length);
+        } while (xml[this.sPointer] != "/" && xml[this.sPointer] != ">" && this.sPointer < xml.length && (xml[this.sPointer+1]+xml[this.sPointer+2]) != "/>");
         return attributes;
     };
     XML.Document.prototype.getElementsByTagName = function(tagName) {
@@ -205,4 +214,3 @@ var XML = {};
         }
     };
 })(XML);
-

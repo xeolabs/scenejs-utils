@@ -369,8 +369,16 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
             var inputArray = [];
             var outputData = {};
             for (var n = 0; n < inputs.length; n++) {
-                inputs[n].data = this._getSource(inputs[n].getAttribute("source").substr(1));
-                var group = inputs[n].getAttribute("semantic");
+				var group = inputs[n].getAttribute("semantic");
+				var srcdata = [];
+				if (group == "VERTEX") {
+					srcdata[0] = this._getSource(inputs[n].getAttribute("source").substr(1),0);
+					srcdata[1] = this._getSource(inputs[n].getAttribute("source").substr(1),1);
+					inputs[n].data = srcdata;
+					outputData["NORMAL"] = [];
+				} else {
+					inputs[n].data = this._getSource(inputs[n].getAttribute("source").substr(1),0);
+				}
                 if (group == "TEXCOORD") {
                     group = group + inputs[n].getAttribute("set") || 0;
                 }
@@ -389,20 +397,28 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
                 for (var n = 0; n < inputArray.length; n++) {
                     var group = inputArray[n].group;
                     var pCount = 0;
-                    for (var j = 0; j < inputArray[n].data.stride; j++) {
-                        if (inputArray[n].data.typeMask[j]) {
+                    for (var j = 0; j < inputArray[n].data[0].stride; j++) {
+                        if (inputArray[n].data[0].typeMask[j]) {
                             outputData[group].push(
-                                    parseFloat(inputArray[n].data.array[faces[i + n]
-                                            * inputArray[n].data.stride + j
-                                            + inputArray[n].data.offset]));
+                                    parseFloat(inputArray[n].data[0].array[faces[i + n]
+                                            * inputArray[n].data[0].stride + j
+                                            + inputArray[n].data[0].offset]));
+							if (group == "VERTEX") {
+							outputData["NORMAL"].push(
+                                    parseFloat(inputArray[n].data[1].array[faces[i + n]
+                                            * inputArray[n].data[1].stride + j
+                                            + inputArray[n].data[1].offset]));
+							}
                             pCount++;
                         }
                     }
                     if (group == "VERTEX" && pCount == 1) { // 1D
                         outputData[group].push(0);
+                        outputData["NORMAL"].push(0);
                     }
                     if (group == "VERTEX" && pCount == 2) { // 2D
                         outputData[group].push(0);
+                        outputData["NORMAL"].push(0);
                     }
                     if (group == "TEXCOORD0" && pCount == 3) { // 2D textures
                         outputData[group].pop();
@@ -512,8 +528,12 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
         return maxOffset;
     };
 
-    this._getSource = function(id) {
-        var source = this._sources[id];
+    this._getSource = function(id,count) {
+        if (count == 0) {
+			var source = this._sources[id];
+		} else {
+			var source = this._sources[id+"N"];
+		}
         if (source) {
             return source;
         }
@@ -521,11 +541,11 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
 
         var value;
         if (element.tagName == "vertices") {
-            source = this._getSource(// Recurse to child <source> element
-                    element
-                            .getElementsByTagName("input")[0]
-                            .getAttribute("source")
-                            .substr(1));
+			source = this._getSource(// Recurse to child <source> element
+					element
+							.getElementsByTagName("input")[count]
+							.getAttribute("source")
+							.substr(1),0);
         } else {
             var accessor = element.getElementsByTagName("technique_common")[0].getElementsByTagName("accessor")[0];
             var sourceArray = this._idMap[accessor.getAttribute("source").substr(1)];
@@ -553,7 +573,11 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
                 typeMask: pmask
             };
         }
-        this._sources[id] = source;
+		if (count == 1) {
+			this._sources[id+"N"] = source;
+		} else {
+			this._sources[id] = source;
+		}
         return source;
     };
 
