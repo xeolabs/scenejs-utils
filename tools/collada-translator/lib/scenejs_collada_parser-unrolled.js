@@ -397,21 +397,41 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
                 for (var n = 0; n < inputArray.length; n++) {
                     var group = inputArray[n].group;
                     var pCount = 0;
-                    for (var j = 0; j < inputArray[n].data[0].stride; j++) {
-                        if (inputArray[n].data[0].typeMask[j]) {
-                            outputData[group].push(
-                                    parseFloat(inputArray[n].data[0].array[faces[i + n]
-                                            * inputArray[n].data[0].stride + j
-                                            + inputArray[n].data[0].offset]));
-							if (group == "VERTEX") {
-							outputData["NORMAL"].push(
-                                    parseFloat(inputArray[n].data[1].array[faces[i + n]
-                                            * inputArray[n].data[1].stride + j
-                                            + inputArray[n].data[1].offset]));
+					if (inputArray[n].data.constructor != Array) {
+						// data is not an array use data directly
+						var stride = inputArray[n].data.stride;
+						for (var j = 0; j < stride; j++) {
+							if (inputArray[n].data.typeMask[j]) {
+								outputData[group].push(
+										parseFloat(inputArray[n].data.array[faces[i + n]
+												* inputArray[n].data.stride + j
+												+ inputArray[n].data.offset]));
+								if (group == "VERTEX") {
+								outputData["NORMAL"].push(
+										parseFloat(inputArray[n].data.array[faces[i + n]
+												* inputArray[n].data.stride + j
+												+ inputArray[n].data.offset]));
+								}
+								pCount++;
 							}
-                            pCount++;
-                        }
-                    }
+						}
+					} else {
+						for (var j = 0; j < inputArray[n].data[0].stride; j++) {
+							if (inputArray[n].data[0].typeMask[j]) {
+								outputData[group].push(
+										parseFloat(inputArray[n].data[0].array[faces[i + n]
+												* inputArray[n].data[0].stride + j
+												+ inputArray[n].data[0].offset]));
+								if (group == "VERTEX") {
+								outputData["NORMAL"].push(
+										parseFloat(inputArray[n].data[1].array[faces[i + n]
+												* inputArray[n].data[1].stride + j
+												+ inputArray[n].data[1].offset]));
+								}
+								pCount++;
+							}
+						}
+					}
                     if (group == "VERTEX" && pCount == 1) { // 1D
                         outputData[group].push(0);
                         outputData["NORMAL"].push(0);
