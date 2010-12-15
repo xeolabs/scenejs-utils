@@ -629,10 +629,9 @@ var SceneJS_ColladaToJSONParser = function() {  // Constructor
     };
 
     this._newExtents = function() {
-        const hugeNum = 9999999; // TODO: Guarantee this is max
         return {
-            xmin : hugeNum, ymin : hugeNum, zmin : hugeNum,
-            xmax : -hugeNum, ymax : -hugeNum, zmax : -hugeNum
+            xmin : Number.MAX_VALUE, ymin : Number.MAX_VALUE, zmin : Number.MAX_VALUE,
+            xmax : Number.MIN_VALUE, ymax : Number.MIN_VALUE, zmax : Number.MIN_VALUE
         };
     };
 
